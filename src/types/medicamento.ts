@@ -2,5 +2,6 @@ export interface iMedicamento {
     id: string,
     nombre: string,
     dosisPorKg: number,
-    unidad: string
+    unidad: string,
+    activo?: number
 }
