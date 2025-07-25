@@ -1,7 +1,11 @@
 export interface iMedicamento {
     id: string,
     nombre: string,
-    dosisPorKg: number,
-    unidad: string,
-    activo?: number
+    presentacion: string,
+    concentracionValor: number,
+    concentracionUnidad: string,
+    posologiaValor: number,
+    posologiaUnidad: string,
+    comentario?: string,
+    activo: boolean,
 }

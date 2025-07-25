@@ -1,16 +1,20 @@
 import { iMedicamento } from "../types/medicamento";
 import { openDB } from "./database";
 import { insertarMedicamento } from "./medicamento-service";
+//import { crearTablaMedicamentos } from "./setup";
 
 export async function resetearMedicamentos() {
   const db = await openDB();
   
-  await db.execAsync('DELETE FROM medicamentos');
+  //await db.execAsync('DELETE FROM medicamentos');
+  //console.log('Tabla medicamentos eliminida');
+  //await db.execAsync('DROP TABLE medicamentos');
+  //await crearTablaMedicamentos();
 
   const medicamentosPorDefecto: iMedicamento[] = [
-    { id: '1', nombre: 'Amoxicilina', dosisPorKg: 20, unidad: 'mg', activo: 1 },
-    { id: '2', nombre: 'Enrofloxacina', dosisPorKg: 5, unidad: 'mg', activo: 1 },
-    { id: '3', nombre: 'Ivermectina', dosisPorKg: 0.2, unidad: 'mg', activo: 1 },
+    { id: '1', nombre: 'Quercetol Inyectable 12,5%', presentacion: 'ml', concentracionValor: 125, concentracionUnidad: 'mg/ml', posologiaValor: 12.5, posologiaUnidad: 'mg/kg', comentario: '', activo: Boolean(1) },
+    { id: '2', nombre: 'Quercetol Tabletas 100 mg', presentacion: 'tab', concentracionValor: 100, concentracionUnidad: 'mg/tab', posologiaValor: 12.5, posologiaUnidad: 'mg/kg', comentario: '', activo: Boolean(1)  },
+    { id: '3', nombre: 'Neguvon 15 g', presentacion: 'sobre', concentracionValor: 0.97, concentracionUnidad: 'mcg/ml', posologiaValor: 50, posologiaUnidad: 'mg/kg', comentario: '', activo: Boolean(0)  },
   ];
 
   medicamentosPorDefecto.forEach(medicamento => {

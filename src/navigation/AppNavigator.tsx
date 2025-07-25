@@ -1,20 +1,51 @@
+// src/navigation/AppNavigator.tsx
 import React from 'react';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+
 import HomeScreen from '../screens/HomeScreen';
-import AddMedicamentoScreen from '../screens/AddMedicamentoScreen';
+import ListaMedicamentosScreen from '../screens/ListaMedicamentosScreen';
+import MedicamentoFormScreen from '../screens/MedicamentoFormScreen';
 
-export type RootStackParamList = {
-    Home: undefined;
-    AddMedicamento: undefined;
-  };
-
-const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
 
 export default function AppNavigator() {
-    return (
-        <Stack.Navigator>
-            <Stack.Screen name='Inicio' component={HomeScreen} options={{ title: "Calcular Medicamentos" }}/>
-            <Stack.Screen name='AddMedicamento' component={AddMedicamentoScreen} options={{ title: "Agregar Medicamentos" }}/>
-        </Stack.Navigator>
-    );
-};
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#4CAF50', // verde ejemplo
+        tabBarStyle: { //height: 60,
+          paddingBottom: 8 },
+      }}
+    >
+      <Tab.Screen
+        name="Mi lista"
+        component={HomeScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="heart" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Medicamentos"
+        component={ListaMedicamentosScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="format-list-bulleted" color={color} size={size} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="Nuevo"
+        component={MedicamentoFormScreen}
+        options={{
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="plus-box" color={color} size={size} />
+          ),
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
