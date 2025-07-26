@@ -15,10 +15,8 @@ import {
   Switch,
 } from "react-native";
 import { List, Dialog, Portal } from "react-native-paper";
-import { MaterialIcons } from "@expo/vector-icons"; // o Ionicons
+import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons"; // o Ionicons
 import { useNavigation } from "@react-navigation/native";
-//import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-//import { RootStackParamList } from "../navigation/AppNavigator";
 
 import { insertarMedicamento } from "../database/medicamento-service";
 
@@ -89,18 +87,15 @@ export default function MedicamentoFormScreen() {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
         <ScrollView
-          contentContainerStyle={{
-            padding: 5,
-            paddingBottom: 40,
-            flexGrow: 1,
-          }}
-          keyboardShouldPersistTaps="handled"
+          contentContainerStyle={styles.scrollContainer}
+        keyboardShouldPersistTaps="handled"
         >
-          <SafeAreaView style={styles.safeArea}>
-            <View style={{ flex: 1, padding: 16 }}>
+          <SafeAreaView style={{ flex: 1, padding: 16 }}>
+            <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 20, fontWeight: "bold" }}>
                 Crear / Editar Medicamento
               </Text>
@@ -228,13 +223,16 @@ export default function MedicamentoFormScreen() {
                   marginTop: 16,
                 }}
               >
-                <Text style={{ fontSize: 16, marginRight: 12 }}>¿Activo?</Text>
-                <Switch
-                  value={activo}
-                  onValueChange={setActivo}
-                  thumbColor={activo ? "#4CAF50" : "#ccc"}
-                  trackColor={{ false: "#999", true: "#A5D6A7" }}
-                />
+                <Text style={{ fontSize: 16, marginRight: 12 }}>
+                  Agregar a Mi Lista
+                </Text>
+                <TouchableOpacity onPress={() => setActivo(!activo)}>
+                  <MaterialCommunityIcons
+                    name="heart"
+                    size={45}
+                    color={activo ? "#4CAF50" : "#ccc"}
+                  />
+                </TouchableOpacity>
               </View>
 
               {/*Boton*/}
@@ -257,6 +255,7 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: "#fff",
+    paddingHorizontal: 16,
   },
   container: {
     padding: 20,
@@ -328,5 +327,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
     letterSpacing: 1,
+  },
+  scrollContainer: {
+    padding: 20,
+    paddingBottom: 60,
+    flexGrow: 1,
   },
 });

@@ -23,14 +23,13 @@ export default function HomeScreen() {
   useFocusEffect(
     useCallback(() => {
       obtenerMedicamentosMarcados()
-        .then(data => {
+        .then((data) => {
           //console.log('Marcados:', data);
           setMedicamentos(data);
         })
         .catch(console.error);
     }, [])
   );
-  
 
   const convertirPosologiaAMgPorKg = (
     valor: number,
@@ -92,33 +91,45 @@ export default function HomeScreen() {
   //const navigation = useNavigation<NavigationProp>();
 
   return (
-    <SafeAreaView style={style.safeArea}>
-      <View style={style.container}>
-        <Text style={style.title}>Calculadora de medicamentos</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={{ fontSize: 20, fontWeight: "bold", marginBottom: 12 }}>
+          Calculadora de medicamentos
+        </Text>
 
         <TextInput
           placeholder="Peso del animal (kg)"
           keyboardType="numeric"
-          style={style.input}
+          style={{
+            borderWidth: 1,
+            borderColor: "#ccc",
+            padding: 10,
+            marginBottom: 16,
+            borderRadius: 8,
+          }}
           onChangeText={(value) => setPeso(value ? parseFloat(value) : 0)}
         />
+
         <FlatList
           data={medicamentos}
-          keyExtractor={(item) => item.id}
-          renderItem={({ item }) => (
+          keyExtractor={(item) => item.id.toString()}
+          
+          renderItem={({ item, index }) => (
             <View
-              style={{ padding: 10, borderBottomWidth: 1, borderColor: "#ccc" }}
+              style={[styles.item, index % 2 === 0 ? styles.even : styles.odd]}
             >
-              <Text style={{ fontWeight: "bold", fontSize: 18 }}>
+              <Text style={styles.nombre}>
                 {item.nombre}
+                {"\n"}
+                <Text style={{ fontSize: 12, color: "#666" }}>
+                  {item.posologiaValor} {item.posologiaUnidad} ·{" "}
+                  {item.concentracionValor} {item.concentracionUnidad}
+                </Text>
               </Text>
-              <Text style={{ fontSize: 14 }}>
-                Posología: {item.posologiaValor} {item.posologiaUnidad}
+              <Text style={styles.dosis}>
+                {"Dosis"}
                 {"\n"}
-                Concentración: {item.concentracionValor}{" "}
-                {item.concentracionUnidad}
-                {"\n"}
-                Dosis para {peso ?? "?"} kg: {calcularDosis(item)}
+                {calcularDosis(item)}
               </Text>
             </View>
           )}
@@ -128,35 +139,61 @@ export default function HomeScreen() {
   );
 }
 
-const style = StyleSheet.create({
-  safeArea: {
-    flex: 1,
-    backgroundColor: "#fff",
-  },
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignContent: "center",
-    backgroundColor: "#f2f2f2",
-  },
-  title: {
-    fontSize: 20,
-    fontWeight: "bold",
-    textAlign: "center",
-    padding: 10,
-  },
-  input: {
-    borderColor: "#ccc",
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    marginLeft: 15,
-    marginRight: 15,
-    fontSize: 16,
-  },
-  medicamento: {
-    fontSize: 20,
-    padding: 10,
-  },
+const styles = StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: '#fff',
+    },
+    container: {
+      flex: 1,
+      padding: 16,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 8,
+      borderBottomWidth: 1,
+      borderColor: '#ccc',
+      backgroundColor: '#f0f0f0',
+    },
+    headerText: {
+      fontWeight: 'bold',
+      fontSize: 16,
+    },
+    item: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      paddingVertical: 12,
+      paddingHorizontal: 8,
+    },
+    even: {
+      backgroundColor: '#f9f9f9',
+    },
+    odd: {
+      backgroundColor: '#ffffff',
+    },
+    nombre: {
+      flex: 2,
+      fontSize: 16,
+      fontWeight: '500',
+    },
+    dosis: {
+      flex: 1,
+      fontSize: 15,
+      textAlign: 'center',
+      color: '#444',
+    },
+    fab: {
+      position: 'absolute',
+      bottom: 30,
+      right: 30,
+      backgroundColor: '#4CAF50',
+      padding: 15,
+      borderRadius: 30,
+      elevation: 5,
+    },
+    fabText: {
+      color: '#fff',
+      fontSize: 18,
+    },  
 });
