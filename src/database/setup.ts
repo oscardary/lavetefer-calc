@@ -7,7 +7,7 @@ export async function openDatabase() {
 export async function crearTablaMedicamentos() {
     const db = await openDatabase();
 
-    await db.execAsync('DROP TABLE medicamentos');
+    //await db.execAsync('DROP TABLE medicamentos');
 
     await db.execAsync(
       `CREATE TABLE IF NOT EXISTS medicamentos (

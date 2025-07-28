@@ -1,8 +1,9 @@
-import { iMedicamento } from './../types/medicamento';
+import { iMedicamento, iMedicamentoId } from './../types/medicamento';
 import { openDatabase } from './setup';
 
 // Insertar un medicamento
 export async function insertarMedicamento(item: iMedicamento) {
+  console.log("item", item);
   const db = await openDatabase();
   await db.runAsync(
       `INSERT INTO medicamentos 
@@ -15,10 +16,26 @@ export async function insertarMedicamento(item: iMedicamento) {
   console.log('✅ Se insertó un medicamento');
 };
 
-// Obtener todos los medicamentos
-export async function obtenerMedicamentos(): Promise<iMedicamento[]> {
+// Actualizar un medicamento
+export async function actualizarMedicamentoPorId(id: number, item: iMedicamento) {
+  console.log("id", id);
+  console.log("item", item);
   const db = await openDatabase();
-  const items = await db.getAllAsync<iMedicamento>(
+  await db.runAsync(
+      `UPDATE medicamentos SET 
+          nombre = ?, presentacion = ?, concentracionValor = ?, concentracionUnidad = ?, 
+          posologiaValor = ?, posologiaUnidad = ?, comentario = ?, activo = ?
+        WHERE id = ?`,
+      [item.nombre, item.presentacion, item.concentracionValor, item.concentracionUnidad, 
+        item.posologiaValor, item.posologiaUnidad, item.comentario, item.activo, id]
+  );
+  console.log('✅ Se actualizó un medicamento');
+};
+
+// Obtener todos los medicamentos
+export async function obtenerMedicamentos(): Promise<iMedicamentoId[]> {
+  const db = await openDatabase();
+  const items = await db.getAllAsync<iMedicamentoId>(
       'SELECT * FROM medicamentos ORDER BY nombre ASC'
   );
   console.log('✅ Se consultaron medicamentos');
@@ -26,9 +43,9 @@ export async function obtenerMedicamentos(): Promise<iMedicamento[]> {
 };
 
 // Obtener solo los medicamentos marcados
-export async function obtenerMedicamentosMarcados(): Promise<iMedicamento[]> {
+export async function obtenerMedicamentosMarcados(): Promise<iMedicamentoId[]> {
   const db = await openDatabase();
-  const items = await db.getAllAsync<iMedicamento>(
+  const items = await db.getAllAsync<iMedicamentoId>(
       'SELECT * FROM medicamentos WHERE activo = 1 ORDER BY nombre ASC'
   );
   console.log('✅ Se consultaron medicamentos marcados', items.length );

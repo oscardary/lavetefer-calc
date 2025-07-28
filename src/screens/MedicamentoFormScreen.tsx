@@ -12,25 +12,31 @@ import {
   Platform,
   Keyboard,
   ScrollView,
-  Switch,
 } from "react-native";
 import { List, Dialog, Portal } from "react-native-paper";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons"; // o Ionicons
-import { useNavigation } from "@react-navigation/native";
+import { useNavigation, RouteProp, useRoute } from "@react-navigation/native";
 
-import { insertarMedicamento } from "../database/medicamento-service";
+import { insertarMedicamento, actualizarMedicamentoPorId } from "../database/medicamento-service";
 
+import { MedicamentoStackParamList } from "../navigation/MedicamentoStackNavigator"
 import { UNIDADES_CONCENTRACION, UNIDADES_POSOLOGIA } from "../constants/units";
 
+type MedicamentoFormScreenRouteProp = RouteProp<MedicamentoStackParamList, "MedicamentoFormScreen">;
+
 export default function MedicamentoFormScreen() {
-  const [nombre, setNombre] = useState("");
-  const [presentacion, setPresentacion] = useState("");
-  const [concentracionValor, setConcentracionValor] = useState("");
-  const [concentracionUnidad, setConcentracionUnidad] = useState("");
-  const [posologiaValor, setPosologiaValor] = useState("");
-  const [posologiaUnidad, setPosologiaUnidad] = useState("");
-  const [comentario, setComentario] = useState("");
-  const [activo, setActivo] = useState(true);
+  const route = useRoute<MedicamentoFormScreenRouteProp>();
+  const medicamento = route.params?.medicamento;
+
+  const [nombre, setNombre] = useState(medicamento?.nombre || "");
+  const [presentacion, setPresentacion] = useState(medicamento?.presentacion || "");
+  const [concentracionValor, setConcentracionValor] = useState(medicamento?.concentracionValor.toString() || "");
+  const [concentracionUnidad, setConcentracionUnidad] = useState(medicamento?.concentracionUnidad || "");
+  const [posologiaValor, setPosologiaValor] = useState(medicamento?.posologiaValor.toString() || "");
+  const [posologiaUnidad, setPosologiaUnidad] = useState(medicamento?.posologiaUnidad || "");
+  const [comentario, setComentario] = useState(medicamento?.comentario || "");
+  const [activo, setActivo] = useState<boolean>(medicamento?.activo ?? true);
+
 
   const [visibleConcentracion, setVisibleConcentracion] = useState(false);
   const [visiblePosologia, setVisiblePosologia] = useState(false);
@@ -52,17 +58,33 @@ export default function MedicamentoFormScreen() {
     }
 
     try {
-      await insertarMedicamento({
-        id: "",
-        nombre,
-        presentacion: "",
-        concentracionValor: parseFloat(concentracionValor),
-        concentracionUnidad,
-        posologiaValor: parseFloat(posologiaValor),
-        posologiaUnidad,
-        comentario,
-        activo: Boolean(activo),
-      });
+      if (medicamento?.id) {
+        console.log("voy a actualizar...");
+        await actualizarMedicamentoPorId(medicamento.id, 
+          {
+            nombre,
+            presentacion,
+            concentracionValor: parseFloat(concentracionValor),
+            concentracionUnidad,
+            posologiaValor: parseFloat(posologiaValor),
+            posologiaUnidad,
+            comentario,
+            activo: Boolean(activo),
+          });
+
+      } else {
+        console.log("voy a insertar...");
+        await insertarMedicamento({
+          nombre,
+          presentacion,
+          concentracionValor: parseFloat(concentracionValor),
+          concentracionUnidad,
+          posologiaValor: parseFloat(posologiaValor),
+          posologiaUnidad,
+          comentario,
+          activo: Boolean(activo),
+        });
+      }
 
       Alert.alert("Éxito", "Medicamento guardado");
 
@@ -76,7 +98,7 @@ export default function MedicamentoFormScreen() {
 
       // Navega de vuelta a la pantalla anterior (opcional)
       navigation.goBack();
-      //navigation.navigate();
+      
     } catch (error) {
       console.error("Error al guardar medicamento", error);
       Alert.alert("Error", "No se pudo guardar el medicamento");
@@ -226,7 +248,7 @@ export default function MedicamentoFormScreen() {
                 <Text style={{ fontSize: 16, marginRight: 12 }}>
                   Agregar a Mi Lista
                 </Text>
-                <TouchableOpacity onPress={() => setActivo(!activo)}>
+                <TouchableOpacity onPress={() => setActivo(activo)}>
                   <MaterialCommunityIcons
                     name="heart"
                     size={45}

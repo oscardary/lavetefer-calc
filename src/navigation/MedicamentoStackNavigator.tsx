@@ -4,9 +4,11 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import ListaMedicamentosScreen from '../screens/ListaMedicamentosScreen';
 import MedicamentoFormScreen from '../screens/MedicamentoFormScreen';
 
+import { iMedicamentoId } from '../types/medicamento';
+
 export type MedicamentoStackParamList = {
   ListaMedicamentos: undefined;
-  MedicamentoFormScreen: undefined;
+  MedicamentoFormScreen: { medicamento?: iMedicamentoId } | undefined;
 };
 
 const Stack = createNativeStackNavigator<MedicamentoStackParamList>();

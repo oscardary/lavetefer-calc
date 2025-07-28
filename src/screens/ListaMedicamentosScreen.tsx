@@ -1,17 +1,20 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
   StyleSheet,
-  FlatList,
   SafeAreaView,
   TouchableOpacity,
 } from "react-native";
 
-import { iMedicamento } from "../types/medicamento";
-import { obtenerMedicamentos } from "../database/medicamento-service";
-import { FontAwesome } from '@expo/vector-icons';
-import { useNavigation } from "@react-navigation/native";
+import { iMedicamento, iMedicamentoId } from "../types/medicamento";
+import {
+  obtenerMedicamentos,
+  actualizarMarcadoMedicamento,
+} from "../database/medicamento-service";
+import { FontAwesome } from "@expo/vector-icons";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import { SwipeListView } from "react-native-swipe-list-view";
 
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { MedicamentoStackParamList } from "../navigation/MedicamentoStackNavigator";
@@ -22,30 +25,44 @@ type NavigationProp = NativeStackNavigationProp<
 >;
 
 export default function ListaMedicamentosScreen() {
-  const [medicamentos, setMedicamentos] = useState<iMedicamento[]>([]);
-
+  const [medicamentos, setMedicamentos] = useState<iMedicamentoId[]>([]);
+  
   const navigation = useNavigation<NavigationProp>();
 
-  useEffect(() => {
+  const cargarMedicamentos = async () => {
     obtenerMedicamentos().then(setMedicamentos).catch(console.error);
+  };
+
+  const editarMedicamento = (item: iMedicamento) => {
+    // Puedes abrir un modal, navegar o llenar un formulario con el medicamento
+    console.log("Editar medicamento:", item);
+  };
+
+  useEffect(() => {
+    //obtenerMedicamentos().then(setMedicamentos).catch(console.error);
+    cargarMedicamentos();
   }, []);
 
-  const renderItem = ({
-    item,
-    index,
-  }: {
-    item: iMedicamento;
-    index: number;
-  }) => (
-    <View style={[styles.item, index % 2 === 0 ? styles.even : styles.odd]}>
-      <Text style={styles.nombre}>
-        {item.nombre} ({item.activo})
-      </Text>
-      <Text style={styles.dosis}>
-        {item.posologiaValor} {item.posologiaUnidad}
-      </Text>
-    </View>
+  useFocusEffect(
+    useCallback(() => {
+      // Aquí vuelves a cargar los medicamentos desde la DB
+      cargarMedicamentos();
+
+      // Opcional: cleanup si lo necesitas
+      return () => {};
+    }, [])
   );
+
+  const actualizarMedicamento = async (id: number, estadoActual: boolean) => {
+    const nuevoEstado = !estadoActual;
+    try {
+      await actualizarMarcadoMedicamento(id, nuevoEstado);
+      // Refrescar la lista o actualizar el estado local
+      cargarMedicamentos(); // o actualiza solo ese ítem
+    } catch (error) {
+      console.error("Error al actualizar medicamento:", error);
+    }
+  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -57,7 +74,7 @@ export default function ListaMedicamentosScreen() {
           backgroundColor: "#fff",
         }}
       >
-        <FlatList
+        <SwipeListView
           data={medicamentos}
           keyExtractor={(item) => item.id.toString()}
           contentContainerStyle={{ paddingTop: 16 }}
@@ -74,13 +91,49 @@ export default function ListaMedicamentosScreen() {
                 </Text>
               </Text>
 
-              <FontAwesome
-                name="heart"
-                size={20}
-                color={Boolean(item.activo) === true ? "#4CAF50" : "#ccc"} // verde si está activo, gris si no
-              />
+              <TouchableOpacity
+                onPress={() =>
+                  actualizarMedicamento(Number(item.id), item.activo)
+                }
+              >
+                <FontAwesome
+                  name="heart"
+                  size={30}
+                  color={Boolean(item.activo) === true ? "#4CAF50" : "#CCC"} // verde si está activo, gris si no
+                />
+              </TouchableOpacity>
             </View>
           )}
+          renderHiddenItem={({ item }, rowMap) => (
+            <View
+              style={{
+                flex: 1,
+                justifyContent: "center",
+                alignItems: "flex-end",
+                paddingRight: 20,
+                backgroundColor: "#2196F3",
+                borderRadius: 8,
+                marginVertical: 4,
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  const thisRow = rowMap[item.id];
+                  if (thisRow) {
+                    thisRow.closeRow(); // ✅ Cierra solo esta fila
+                  }
+                  navigation.navigate("MedicamentoFormScreen", {
+                    medicamento: item,
+                  });
+                }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "bold" }}>
+                  Editar
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+          rightOpenValue={-75}
         />
 
         {/* FAB flotante para agregar nuevo medicamento */}
@@ -96,7 +149,7 @@ export default function ListaMedicamentosScreen() {
           }}
           onPress={() => navigation.navigate("MedicamentoFormScreen")}
         >
-          <Text style={{ color: "#fff", fontSize: 18 }}>+</Text>
+          <Text style={{ color: "#fff", fontSize: 30 }}>+</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
