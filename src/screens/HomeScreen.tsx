@@ -8,98 +8,30 @@ import {
 } from "react-native";
 import { FlatList, TextInput } from "react-native-gesture-handler";
 import { useFocusEffect } from "@react-navigation/native";
-//import { RootStackParamList } from "../navigation/AppNavigator";
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
 
-import { iMedicamento, iMedicamentoId } from "../types/medicamento";
+import { iMedicamentoId } from "../types/medicamento";
 import { obtenerMedicamentosMarcados } from "../database/medicamento-service";
+
+import { calcularDosis } from "../utils/calculadoraDosis";
 
 export default function HomeScreen() {
   const [medicamentos, setMedicamentos] = useState<iMedicamentoId[]>([]);
   const [peso, setPeso] = useState<string>("");
 
-  /*useEffect(() => {
-    async function fetchData() {
-      const data = await obtenerMedicamentosMarcados();
-      setMedicamentos(data);
-    }
-    fetchData();
-  }, []);*/
-
   useFocusEffect(
     useCallback(() => {
       obtenerMedicamentosMarcados()
         .then((data) => {
-          //console.log('Marcados:', data);
           setMedicamentos(data);
         })
         .catch(console.error);
     }, [])
   );
 
-  const convertirPosologiaAMgPorKg = (
-    valor: number,
-    unidad: string
-  ): number => {
-    switch (unidad) {
-      case "mg/kg":
-        return valor;
-      case "mcg/kg":
-        return valor / 1000;
-      case "g/kg":
-        return valor * 1000;
-      default:
-        throw new Error(`Unidad de posología no soportada: ${unidad}`);
-    }
-  };
-
-  const convertirConcentracionAMgPorMl = (
-    valor: number,
-    unidad: string
-  ): number => {
-    switch (unidad) {
-      case "mg/ml":
-        return valor;
-      case "mcg/ml":
-        return valor / 1000;
-      case "g/ml":
-        return valor * 1000;
-      default:
-        throw new Error(`Unidad de concentración no soportada: ${unidad}`);
-    }
-  };
-
-  const calcularDosis = (medicamento: iMedicamento): string => {
-    const iPeso = parseFloat(peso);
-    if (isNaN(iPeso)) return "...";
-
-    try {
-      const posologiaMg = convertirPosologiaAMgPorKg(
-        medicamento.posologiaValor,
-        medicamento.posologiaUnidad
-      );
-      const concentracionMgMl = convertirConcentracionAMgPorMl(
-        medicamento.concentracionValor,
-        medicamento.concentracionUnidad
-      );
-
-      const cantidadMg = iPeso * posologiaMg;
-      const volumenML = cantidadMg / concentracionMgMl;
-
-      return `${volumenML.toFixed(2)} ml`;
-    } catch (error: any) {
-      console.error("❌ Error en cálculo:", error.message);
-      return "Error";
-    }
-  };
-
   const limpiarInput = () => {
     setPeso("");
   };
-
-  //Navegación entre pantallas
-  //type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Home">;
-  //const navigation = useNavigation<NavigationProp>();
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -127,7 +59,7 @@ export default function HomeScreen() {
               marginBottom: 16,
               borderRadius: 8,
             }}
-            onChangeText={(value) => setPeso(value)} //value ? parseFloat(value) : 0)}
+            onChangeText={(value) => setPeso(value)}
           />
           {peso !== null && (
             <TouchableOpacity
@@ -156,14 +88,15 @@ export default function HomeScreen() {
                 {item.nombre}
                 {"\n"}
                 <Text style={{ fontSize: 12, color: "#666" }}>
-                  {item.posologiaValor} {item.posologiaUnidad} {"| "}
-                  {item.concentracionValor} {item.concentracionUnidad}
+                  {"P:"} {item.posologiaValor} {item.posologiaUnidad}
+                  {" | "}
+                  {"C:"} {item.concentracionValor} {item.concentracionUnidad}
                 </Text>
               </Text>
               <Text style={styles.dosis}>
                 {"Dosis"}
                 {"\n"}
-                {calcularDosis(item)}
+                {calcularDosis(item, peso)}
               </Text>
             </View>
           )}
