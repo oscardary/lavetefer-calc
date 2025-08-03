@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react";
+import React, { useCallback } from "react";
 import {
   View,
   Text,
@@ -6,17 +6,12 @@ import {
   SafeAreaView,
   TouchableOpacity,
 } from "react-native";
-
-import { iMedicamento, iMedicamentoId } from "../types/medicamento";
-import {
-  obtenerMedicamentos,
-  actualizarMarcadoMedicamento,
-} from "../database/medicamento-service";
 import { FontAwesome } from "@expo/vector-icons";
 import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import { SwipeListView } from "react-native-swipe-list-view";
-
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+
+import { useMedicamentos } from "../hook/useMedicamentos";
 import { MedicamentoStackParamList } from "../navigation/MedicamentoStackNavigator";
 
 type NavigationProp = NativeStackNavigationProp<
@@ -25,44 +20,17 @@ type NavigationProp = NativeStackNavigationProp<
 >;
 
 export default function ListaMedicamentosScreen() {
-  const [medicamentos, setMedicamentos] = useState<iMedicamentoId[]>([]);
-  
+  const { medicamentos, cargarMedicamentos, actualizarFavorito } = useMedicamentos();
   const navigation = useNavigation<NavigationProp>();
-
-  const cargarMedicamentos = async () => {
-    obtenerMedicamentos().then(setMedicamentos).catch(console.error);
-  };
-
-  const editarMedicamento = (item: iMedicamento) => {
-    // Puedes abrir un modal, navegar o llenar un formulario con el medicamento
-    console.log("Editar medicamento:", item);
-  };
-
-  useEffect(() => {
-    //obtenerMedicamentos().then(setMedicamentos).catch(console.error);
-    cargarMedicamentos();
-  }, []);
 
   useFocusEffect(
     useCallback(() => {
       // Aquí vuelves a cargar los medicamentos desde la DB
       cargarMedicamentos();
-
       // Opcional: cleanup si lo necesitas
       return () => {};
     }, [])
   );
-
-  const actualizarMedicamento = async (id: number, estadoActual: boolean) => {
-    const nuevoEstado = !estadoActual;
-    try {
-      await actualizarMarcadoMedicamento(id, nuevoEstado);
-      // Refrescar la lista o actualizar el estado local
-      cargarMedicamentos(); // o actualiza solo ese ítem
-    } catch (error) {
-      console.error("Error al actualizar medicamento:", error);
-    }
-  };
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
@@ -92,9 +60,7 @@ export default function ListaMedicamentosScreen() {
               </Text>
 
               <TouchableOpacity
-                onPress={() =>
-                  actualizarMedicamento(Number(item.id), item.activo)
-                }
+                onPress={() => actualizarFavorito(Number(item.id), item.activo)}
               >
                 <FontAwesome
                   name="heart"

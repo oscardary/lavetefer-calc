@@ -1,14 +1,14 @@
 export interface iMedicamento {
     nombre: string,
     presentacion: string,
-    concentracionValor: number,
+    concentracionValor: string,
     concentracionUnidad: string,
-    posologiaValor: number,
+    posologiaValor: string,
     posologiaUnidad: string,
     comentario: string,
     activo: boolean,
 }
 
 export interface iMedicamentoId extends iMedicamento {
-    id: number;
+    id?: number;
 }

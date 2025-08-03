@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+//HomeScreen.tsx
+import { useCallback, useState } from "react";
 import {
   View,
   Text,
@@ -10,28 +11,23 @@ import { FlatList, TextInput } from "react-native-gesture-handler";
 import { useFocusEffect } from "@react-navigation/native";
 import { Ionicons } from "@expo/vector-icons";
 
-import { iMedicamentoId } from "../types/medicamento";
-import { obtenerMedicamentosMarcados } from "../database/medicamento-service";
-
+import { useMedicamentos } from "../hook/useMedicamentos";
 import { calcularDosis } from "../utils/calculadoraDosis";
 
 export default function HomeScreen() {
-  const [medicamentos, setMedicamentos] = useState<iMedicamentoId[]>([]);
+  const { medicamentos, cargarMedicamentos } = useMedicamentos({ soloActivos: true }); // usamos el hook
   const [peso, setPeso] = useState<string>("");
-
-  useFocusEffect(
-    useCallback(() => {
-      obtenerMedicamentosMarcados()
-        .then((data) => {
-          setMedicamentos(data);
-        })
-        .catch(console.error);
-    }, [])
-  );
 
   const limpiarInput = () => {
     setPeso("");
   };
+
+  // ⏎ Cargar medicamentos cuando HomeScreen vuelva a enfocarse
+  useFocusEffect(
+    useCallback(() => {
+      cargarMedicamentos();
+    }, [cargarMedicamentos])
+  );
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -63,7 +59,7 @@ export default function HomeScreen() {
           />
           {peso !== null && (
             <TouchableOpacity
-              onPress={() => limpiarInput()}
+              onPress={limpiarInput}
               style={{
                 position: "absolute",
                 right: 5,
@@ -79,7 +75,7 @@ export default function HomeScreen() {
 
         <FlatList
           data={medicamentos}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.id!.toString()}
           renderItem={({ item, index }) => (
             <View
               style={[styles.item, index % 2 === 0 ? styles.even : styles.odd]}

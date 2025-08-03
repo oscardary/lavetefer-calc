@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import {
-  Alert,
   View,
   Text,
   TextInput,
@@ -17,26 +16,40 @@ import { List, Dialog, Portal } from "react-native-paper";
 import { MaterialIcons, MaterialCommunityIcons } from "@expo/vector-icons"; // o Ionicons
 import { useNavigation, RouteProp, useRoute } from "@react-navigation/native";
 
-import { insertarMedicamento, actualizarMedicamentoPorId } from "../database/medicamento-service";
-
-import { MedicamentoStackParamList } from "../navigation/MedicamentoStackNavigator"
+import { useMedicamentos } from "../hook/useMedicamentos";
+import { iMedicamentoId } from "../types/medicamento";
+import { MedicamentoStackParamList } from "../navigation/MedicamentoStackNavigator";
 import { UNIDADES_CONCENTRACION, UNIDADES_POSOLOGIA } from "../constants/units";
 
-type MedicamentoFormScreenRouteProp = RouteProp<MedicamentoStackParamList, "MedicamentoFormScreen">;
+type MedicamentoFormScreenRouteProp = RouteProp<
+  MedicamentoStackParamList,
+  "MedicamentoFormScreen"
+>;
 
 export default function MedicamentoFormScreen() {
+  const { guardarMedicamento, actualizarFavorito } = useMedicamentos();
+
   const route = useRoute<MedicamentoFormScreenRouteProp>();
   const medicamento = route.params?.medicamento;
 
   const [nombre, setNombre] = useState(medicamento?.nombre || "");
-  const [presentacion, setPresentacion] = useState(medicamento?.presentacion || "");
-  const [concentracionValor, setConcentracionValor] = useState(medicamento?.concentracionValor.toString() || "");
-  const [concentracionUnidad, setConcentracionUnidad] = useState(medicamento?.concentracionUnidad || "");
-  const [posologiaValor, setPosologiaValor] = useState(medicamento?.posologiaValor.toString() || "");
-  const [posologiaUnidad, setPosologiaUnidad] = useState(medicamento?.posologiaUnidad || "");
+  const [presentacion, setPresentacion] = useState(
+    medicamento?.presentacion || ""
+  );
+  const [concentracionValor, setConcentracionValor] = useState(
+    medicamento?.concentracionValor || ""
+  );
+  const [concentracionUnidad, setConcentracionUnidad] = useState(
+    medicamento?.concentracionUnidad || ""
+  );
+  const [posologiaValor, setPosologiaValor] = useState(
+    medicamento?.posologiaValor || ""
+  );
+  const [posologiaUnidad, setPosologiaUnidad] = useState(
+    medicamento?.posologiaUnidad || ""
+  );
   const [comentario, setComentario] = useState(medicamento?.comentario || "");
   const [activo, setActivo] = useState<boolean>(medicamento?.activo ?? true);
-
 
   const [visibleConcentracion, setVisibleConcentracion] = useState(false);
   const [visiblePosologia, setVisiblePosologia] = useState(false);
@@ -44,66 +57,207 @@ export default function MedicamentoFormScreen() {
   // dentro del componente MedicamentoFormScreen
   const navigation = useNavigation();
 
-  const guardarMedicamento = async () => {
-    if (
-      !nombre ||
-      !presentacion ||
-      !concentracionValor ||
-      !concentracionUnidad ||
-      !posologiaValor ||
-      !posologiaUnidad
-    ) {
-      Alert.alert("Error", "Faltan campos obligatorios");
-      return;
-    }
+  const toggleFavorito = async () => {
+    const nuevoActivo = !activo;
+    setActivo(nuevoActivo);
 
+    if (!medicamento?.id) return;
+    await actualizarFavorito(medicamento.id, nuevoActivo);
+  };
+
+  const onGuardar = async () => {
     try {
-      if (medicamento?.id) {
-        console.log("voy a actualizar...");
-        await actualizarMedicamentoPorId(medicamento.id, 
-          {
-            nombre,
-            presentacion,
-            concentracionValor: parseFloat(concentracionValor),
-            concentracionUnidad,
-            posologiaValor: parseFloat(posologiaValor),
-            posologiaUnidad,
-            comentario,
-            activo: Boolean(activo),
-          });
+      const nuevo: iMedicamentoId = {
+        id: medicamento?.id,
+        nombre,
+        presentacion,
+        concentracionValor,
+        concentracionUnidad,
+        posologiaValor,
+        posologiaUnidad,
+        comentario,
+        activo,
+      };
 
-      } else {
-        console.log("voy a insertar...");
-        await insertarMedicamento({
-          nombre,
-          presentacion,
-          concentracionValor: parseFloat(concentracionValor),
-          concentracionUnidad,
-          posologiaValor: parseFloat(posologiaValor),
-          posologiaUnidad,
-          comentario,
-          activo: Boolean(activo),
-        });
+      await guardarMedicamento(nuevo);
+
+      // Limpia si es nuevo, o simplemente regresa
+      if (!medicamento?.id) {
+        setNombre("");
+        setPresentacion("");
+        setConcentracionValor("");
+        setConcentracionUnidad("");
+        setPosologiaValor("");
+        setPosologiaUnidad("");
+        setComentario("");
+        setActivo(true);
       }
 
-      Alert.alert("Éxito", "Medicamento guardado");
-
-      // Limpia el formulario
-      setNombre("");
-      setPresentacion("");
-      setConcentracionValor("");
-      setConcentracionUnidad("");
-      setPosologiaValor("");
-      setPosologiaUnidad("");
-
-      // Navega de vuelta a la pantalla anterior (opcional)
       navigation.goBack();
-      
-    } catch (error) {
-      console.error("Error al guardar medicamento", error);
-      Alert.alert("Error", "No se pudo guardar el medicamento");
+    } catch (err) {
+      // podrías mostrar un Toast o Alert
+      console.warn("No se pudo guardar el medicamento");
     }
   };
+
+  const camposFormulario = (
+    <ScrollView
+      contentContainerStyle={styles.scrollContainer}
+      keyboardShouldPersistTaps="handled"
+    >
+      <SafeAreaView style={{ flex: 1, padding: 16 }}>
+        <View style={{ flex: 1 }}>
+          <Text style={{ fontSize: 20, fontWeight: "bold" }}>
+            Crear / Editar Medicamento
+          </Text>
+          {/* Aquí irán los inputs */}
+          <Text style={styles.label}>Nombre</Text>
+          <TextInput
+            value={nombre}
+            onChangeText={setNombre}
+            placeholder="Ej: Enrofloxacina"
+            style={styles.input}
+          />
+
+          <Text style={styles.label}>Presentación</Text>
+          <TextInput
+            value={presentacion}
+            onChangeText={setPresentacion}
+            placeholder="Ej: tabletas"
+            style={styles.input}
+          />
+
+          <Text style={styles.label}>Concentración</Text>
+          <TextInput
+            value={concentracionValor}
+            onChangeText={setConcentracionValor}
+            placeholder="Ej: 100"
+            keyboardType="decimal-pad"
+            style={styles.input}
+          />
+
+          <Text style={styles.label}>Unidad de concentración</Text>
+          <TouchableOpacity
+            style={styles.dropdownContainer}
+            onPress={() => setVisibleConcentracion(true)}
+          >
+            <Text
+              style={[
+                styles.dropdownText,
+                !concentracionUnidad && styles.placeholderText, // aplica estilo si está vacío
+              ]}
+            >
+              {concentracionUnidad || "Selecciona unidad de concentración"}
+            </Text>
+            <MaterialIcons name="arrow-drop-down" size={24} color="gray" />
+          </TouchableOpacity>
+
+          <Portal>
+            <Dialog
+              visible={visibleConcentracion}
+              onDismiss={() => setVisibleConcentracion(false)}
+            >
+              <Dialog.Title>Selecciona una unidad</Dialog.Title>
+              <Dialog.Content>
+                {UNIDADES_CONCENTRACION.map((unidad) => (
+                  <List.Item
+                    key={unidad}
+                    title={unidad}
+                    onPress={() => {
+                      setConcentracionUnidad(unidad);
+                      setVisibleConcentracion(false);
+                    }}
+                  />
+                ))}
+              </Dialog.Content>
+            </Dialog>
+          </Portal>
+
+          <Text style={styles.label}>Posología</Text>
+          <TextInput
+            value={posologiaValor}
+            onChangeText={setPosologiaValor}
+            placeholder="Ej: 5"
+            keyboardType="decimal-pad"
+            style={styles.input}
+          />
+
+          <Text style={styles.label}>Unidad de posología</Text>
+          <TouchableOpacity
+            style={styles.dropdownContainer}
+            onPress={() => setVisiblePosologia(true)}
+          >
+            <Text
+              style={[
+                styles.dropdownText,
+                !posologiaUnidad && styles.placeholderText, // aplica estilo si está vacío
+              ]}
+            >
+              {posologiaUnidad || "Selecciona unidad de posología"}
+            </Text>
+            <MaterialIcons name="arrow-drop-down" size={24} color="gray" />
+          </TouchableOpacity>
+
+          <Portal>
+            <Dialog
+              visible={visiblePosologia}
+              onDismiss={() => setVisiblePosologia(false)}
+            >
+              <Dialog.Title>Selecciona una unidad</Dialog.Title>
+              <Dialog.Content>
+                {UNIDADES_POSOLOGIA.map((unidad) => (
+                  <List.Item
+                    key={unidad}
+                    title={unidad}
+                    onPress={() => {
+                      setPosologiaUnidad(unidad);
+                      setVisiblePosologia(false);
+                    }}
+                  />
+                ))}
+              </Dialog.Content>
+            </Dialog>
+          </Portal>
+
+          <Text style={styles.label}>Comentario</Text>
+          <TextInput
+            value={comentario}
+            onChangeText={setComentario}
+            placeholder="Ej: Texto descriptivo"
+            style={styles.input}
+          />
+
+          <View
+            style={{
+              flexDirection: "row",
+              alignItems: "center",
+              marginTop: 16,
+            }}
+          >
+            <Text style={{ fontSize: 16, marginRight: 12 }}>
+              Agregar a Mi Lista
+            </Text>
+            <TouchableOpacity onPress={toggleFavorito}>
+              <MaterialCommunityIcons
+                name="heart"
+                size={45}
+                color={activo ? "#4CAF50" : "#ccc"}
+              />
+            </TouchableOpacity>
+          </View>
+
+          {/*Boton*/}
+          <TouchableOpacity
+            onPress={onGuardar}
+            style={styles.botonGuardar}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.textoBotonGuardar}>Guardar</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    </ScrollView>
+  );
 
   return (
     <KeyboardAvoidingView
@@ -111,164 +265,17 @@ export default function MedicamentoFormScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={styles.scrollContainer}
-        keyboardShouldPersistTaps="handled"
-        >
-          <SafeAreaView style={{ flex: 1, padding: 16 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 20, fontWeight: "bold" }}>
-                Crear / Editar Medicamento
-              </Text>
-              {/* Aquí irán los inputs */}
-              <Text style={styles.label}>Nombre</Text>
-              <TextInput
-                value={nombre}
-                onChangeText={setNombre}
-                placeholder="Ej: Enrofloxacina"
-                style={styles.input}
-              />
-
-              <Text style={styles.label}>Presentación</Text>
-              <TextInput
-                value={presentacion}
-                onChangeText={setPresentacion}
-                placeholder="Ej: tabletas"
-                style={styles.input}
-              />
-
-              <Text style={styles.label}>Concentración</Text>
-              <TextInput
-                value={concentracionValor}
-                onChangeText={setConcentracionValor}
-                placeholder="Ej: 100"
-                keyboardType="decimal-pad"
-                style={styles.input}
-              />
-
-              <Text style={styles.label}>Unidad de concentración</Text>
-              <TouchableOpacity
-                style={styles.dropdownContainer}
-                onPress={() => setVisibleConcentracion(true)}
-              >
-                <Text
-                  style={[
-                    styles.dropdownText,
-                    !concentracionUnidad && styles.placeholderText, // aplica estilo si está vacío
-                  ]}
-                >
-                  {concentracionUnidad || "Selecciona unidad de concentración"}
-                </Text>
-                <MaterialIcons name="arrow-drop-down" size={24} color="gray" />
-              </TouchableOpacity>
-
-              <Portal>
-                <Dialog
-                  visible={visibleConcentracion}
-                  onDismiss={() => setVisibleConcentracion(false)}
-                >
-                  <Dialog.Title>Selecciona una unidad</Dialog.Title>
-                  <Dialog.Content>
-                    {UNIDADES_CONCENTRACION.map((unidad) => (
-                      <List.Item
-                        key={unidad}
-                        title={unidad}
-                        onPress={() => {
-                          setConcentracionUnidad(unidad);
-                          setVisibleConcentracion(false);
-                        }}
-                      />
-                    ))}
-                  </Dialog.Content>
-                </Dialog>
-              </Portal>
-
-              <Text style={styles.label}>Posología</Text>
-              <TextInput
-                value={posologiaValor}
-                onChangeText={setPosologiaValor}
-                placeholder="Ej: 5"
-                keyboardType="decimal-pad"
-                style={styles.input}
-              />
-
-              <Text style={styles.label}>Unidad de posología</Text>
-              <TouchableOpacity
-                style={styles.dropdownContainer}
-                onPress={() => setVisiblePosologia(true)}
-              >
-                <Text
-                  style={[
-                    styles.dropdownText,
-                    !posologiaUnidad && styles.placeholderText, // aplica estilo si está vacío
-                  ]}
-                >
-                  {posologiaUnidad || "Selecciona unidad de posología"}
-                </Text>
-                <MaterialIcons name="arrow-drop-down" size={24} color="gray" />
-              </TouchableOpacity>
-
-              <Portal>
-                <Dialog
-                  visible={visiblePosologia}
-                  onDismiss={() => setVisiblePosologia(false)}
-                >
-                  <Dialog.Title>Selecciona una unidad</Dialog.Title>
-                  <Dialog.Content>
-                    {UNIDADES_POSOLOGIA.map((unidad) => (
-                      <List.Item
-                        key={unidad}
-                        title={unidad}
-                        onPress={() => {
-                          setPosologiaUnidad(unidad);
-                          setVisiblePosologia(false);
-                        }}
-                      />
-                    ))}
-                  </Dialog.Content>
-                </Dialog>
-              </Portal>
-
-              <Text style={styles.label}>Comentario</Text>
-              <TextInput
-                value={comentario}
-                onChangeText={setComentario}
-                placeholder="Ej: Texto descriptivo"
-                style={styles.input}
-              />
-
-              <View
-                style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  marginTop: 16,
-                }}
-              >
-                <Text style={{ fontSize: 16, marginRight: 12 }}>
-                  Agregar a Mi Lista
-                </Text>
-                <TouchableOpacity onPress={() => setActivo(activo)}>
-                  <MaterialCommunityIcons
-                    name="heart"
-                    size={45}
-                    color={activo ? "#4CAF50" : "#ccc"}
-                  />
-                </TouchableOpacity>
-              </View>
-
-              {/*Boton*/}
-              <TouchableOpacity
-                onPress={guardarMedicamento}
-                style={styles.botonGuardar}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.textoBotonGuardar}>Guardar</Text>
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-        </ScrollView>
-      </TouchableWithoutFeedback>
+      {
+        //Si es WEB entonces se muestran los campos del formulario
+        Platform.OS === "web" ? (
+          camposFormulario // En web, NO usar TouchableWithoutFeedback
+        ) : (
+          //Si NO es WEB los campos del formulario van en medio de TouchableWithoutFeedback
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            {camposFormulario}
+          </TouchableWithoutFeedback>
+        )
+      }
     </KeyboardAvoidingView>
   );
 }

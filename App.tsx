@@ -6,20 +6,22 @@ import { StyleSheet, View, ActivityIndicator } from "react-native";
 import { Provider as PaperProvider } from "react-native-paper";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
-import { crearTablaMedicamentos } from "./src/database/setup";
-import { obtenerMedicamentos } from "./src/database/medicamento-service";
 import { resetearMedicamentos } from "./src/database/resetearMedicamentos";
+import { getMedicamentosRepository } from "./src/data/repositories/medicamentos/MedicamentosFactory";
 
 export default function App() {
   const [dbLista, setDbLista] = useState(false);
 
   useEffect(() => {
     async function inicializarBaseDeDatos() {
-      await crearTablaMedicamentos();
-      const existentes = await obtenerMedicamentos();
+      const repo = getMedicamentosRepository(); // Usa el repositorio correcto
+      await repo.inicializarTablaMedicamentos(); // Crea la tabla
+
+      const existentes = await repo.obtenerTodos();
       if (existentes.length === 0) {
-        await resetearMedicamentos();
+        await resetearMedicamentos(repo);
         console.log("✅ Medicamentos por defecto insertados");
+        console.log("❌ REVISAR Medicamentos por defecto");
       } else {
         console.log("ℹ️ Ya existen medicamentos");
       }
